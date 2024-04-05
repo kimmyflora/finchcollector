@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from .models import Finch
+from .forms import FeedingForm
 
 # Create your views here.
 
@@ -14,31 +15,43 @@ def about(request):
 
 
 class FinchCreate(CreateView):
-	model = Finch 
-	fields = '__all__'
+    model = Finch
+    fields = '__all__'
+
 
 class FinchUpdate(UpdateView):
-	model = Finch
-	# disallow renaming of the cat
-	fields = ['breed', 'description', 'age']
+    model = Finch
+    # disallow renaming of the cat
+    fields = ['breed', 'description', 'age']
+
 
 class FinchDelete(DeleteView):
-	model = Finch 
+    model = Finch
 
-	success_url = '/finches' 
-
+    success_url = '/finches'
 
 
 def finches_index(request):
     finches = Finch.objects.all()
-    return render(request,'finches/index.html', {
+    return render(request, 'finches/index.html', {
         'finches': finches
 
     })
 
+
 def finches_detail(request, finch_id):
     finch = Finch.objects.get(id=finch_id)
-    return render(request,'finches/detail.html',{
-         'finch': finch
-	})
-        
+    feeding_form = FeedingForm()
+    return render(request, 'finches/detail.html', {
+        'finch': finch,
+        'feeding_form': feeding_form
+    })
+
+
+def add_feeding(request, finch_id):
+    form = FeedingForm(request.POST)
+    if form.is_valid():
+        new_feeding = form.save(commit=False)
+        new_feeding.finch_id = finch_id
+        new_feeding.save()
+    return redirect('detail', finch_id=finch_id)
